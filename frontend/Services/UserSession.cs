@@ -37,7 +37,7 @@ namespace frontend.Services
 
     public async Task<bool> LoginAsync(string username, string password)
     {
-      var response = await _http.PostAsync($"https://api-creativedevtool.rsanjur.com/login?username={username}&password={password}", null);
+      var response = await _http.PostAsync($"https://api-creativedevtool.rsanjur.com/auth/login?username={username}&password={password}", null);
       if (response.IsSuccessStatusCode)
       {
         var user = await response.Content.ReadFromJsonAsync<UserDto>();
@@ -55,7 +55,7 @@ namespace frontend.Services
 
     public async Task<string?> RegisterAsync(string username, string password)
     {
-      var response = await _http.PostAsync($"https://api-creativedevtool.rsanjur.com/register?username={username}&password={password}", null);
+      var response = await _http.PostAsync($"https://api-creativedevtool.rsanjur.com/auth/register?username={username}&password={password}", null);
       if (response.IsSuccessStatusCode)
       {
         return null; // Success
