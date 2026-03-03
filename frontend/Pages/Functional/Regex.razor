@@ -1,0 +1,149 @@
+@page "/regex"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject frontend.Services.UserSession UserSession
+
+<MudText Typo="Typo.h4" GutterBottom="true">Regex Tester Pro</MudText>
+<MudText Class="mb-8">Prueba y entiende tus expresiones regulares con explicaciones detalladas y validación real.
+</MudText>
+
+<MudGrid>
+  <MudItem xs="12" md="6">
+    <MudTextField @bind-Value="_regex" Label="Tu Regex" Variant="Variant.Outlined" FullWidth="true"
+                  Placeholder="@_regexPlaceholder" />
+    <MudTextField @bind-Value="_testText" Label="Texto de Prueba" Variant="Variant.Outlined" FullWidth="true" Lines="5"
+                  Class="mt-4" Placeholder="Pega aquí el texto para validar..." />
+    <div class="d-flex gap-2 mt-4">
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExplainRegex" Disabled="_loading">
+        Explicar Regex
+      </MudButton>
+      @if (UserSession.IsLoggedIn && !string.IsNullOrEmpty(_regex))
+      {
+        <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" OnClick="SaveFavorite"
+                       Title="Guardar en mi Biblioteca" />
+      }
+    </div>
+  </MudItem>
+
+  <MudItem xs="12" md="6">
+    <MudPaper Elevation="4" Class="pa-6 rounded-lg glass-panel">
+      <div class="d-flex align-center mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Primary" Class="mr-2" />
+        <MudText Typo="Typo.h5">Guía de tu Expresión Regular</MudText>
+      </div>
+
+      <MudDivider Class="mb-4" />
+
+      @if (_response != null)
+      {
+        <MudAlert Severity="@(_response.IsMatch? Severity.Success: Severity.Normal)" Variant="Variant.Filled"
+                  Icon="@(_response.IsMatch ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.HighlightOff)"
+                  Class="mb-4 py-2">
+          <div style="white-space: pre-wrap;">@((MarkupString)_response.MatchDetails)</div>
+        </MudAlert>
+
+        <div class="explanation-content">
+          @foreach (var line in _response.Explanation.Split('\n'))
+          {
+            @if (!string.IsNullOrWhiteSpace(line))
+            {
+              <div class="d-flex align-start mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" Color="Color.Default" Class="mr-2 mt-1" />
+                <MudText Typo="Typo.body1">@((MarkupString)line)</MudText>
+              </div>
+            }
+          }
+        </div>
+      }
+      else
+      {
+        <MudText Typo="Typo.body1" Class="mud-text-secondary">Pega un regex y presiona "Explicar" para ver el análisis.
+        </MudText>
+      }
+    </MudPaper>
+  </MudItem>
+</MudGrid>
+
+@code {
+  private string _regex = "";
+  private string _testText = "";
+  private bool _loading = false;
+  private RegexResponse? _response;
+  private string _regexPlaceholder = @"ej: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+
+  private async Task ExplainRegex()
+  {
+    if (string.IsNullOrWhiteSpace(_regex)) return;
+    _loading = true;
+    try
+    {
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/regex-explain", new
+      {
+        regex = _regex,
+        text = _testText
+      });
+      if (response.IsSuccessStatusCode)
+      {
+        _response = await response.Content.ReadFromJsonAsync<RegexResponse>();
+      }
+    }
+    catch (Exception ex)
+    {
+      Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+    }
+    finally
+    {
+      _loading = false;
+    }
+  }
+
+  private async Task SaveFavorite()
+  {
+    if (!UserSession.IsLoggedIn || string.IsNullOrEmpty(_regex)) return;
+
+    try
+    {
+      var favorite = new
+      {
+        user_id = UserSession.UserId,
+        pattern = _regex,
+        explanation = _response?.Explanation ?? "Análisis básico",
+        title = _regex.Length > 20 ? _regex.Substring(0, 17) + "..." : _regex
+      };
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/regex", favorite);
+      if (response.IsSuccessStatusCode)
+      {
+        Snackbar.Add("Regex guardado en tu biblioteca", Severity.Success);
+      }
+    }
+    catch (Exception)
+    {
+      Snackbar.Add("Error al guardar favorito", Severity.Error);
+    }
+  }
+
+  public class RegexResponse
+  {
+    [System.Text.Json.Serialization.JsonPropertyName("explanation")]
+    public string Explanation { get; set; } = "";
+
+    [System.Text.Json.Serialization.JsonPropertyName("match_details")]
+    public string MatchDetails { get; set; } = "";
+
+    [System.Text.Json.Serialization.JsonPropertyName("is_match")]
+    public bool IsMatch { get; set; }
+  }
+}
+
+<style>
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .explanation-content {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+</style>

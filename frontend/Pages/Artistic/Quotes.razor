@@ -1,0 +1,125 @@
+@page "/quotes"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject frontend.Services.UserSession UserSession
+@using System.Text.Json.Serialization
+
+<MudText Typo="Typo.h4" GutterBottom="true">Inspiring Quotes for Devs</MudText>
+<MudText Class="mb-8">Un toque de sabiduría técnica para empezar tu jornada.</MudText>
+
+@if (_response == null)
+{
+  <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+  <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-8 pa-10 glass-quote" Elevation="10"
+            Icon="@Icons.Material.Filled.Lightbulb">
+    <div class="d-flex flex-column align-center relative">
+      <MudText Typo="Typo.h5" Align="Align.Center" Style="font-style: italic; font-weight: bold;">
+        "@_response.QuoteEn"
+      </MudText>
+      
+      <MudDivider Class="my-4" Style="width: 50%; background: rgba(255,255,255,0.3);" />
+      
+      <MudText Typo="Typo.h6" Align="Align.Center" Style="font-style: italic; opacity: 0.9;">
+        "@_response.QuoteEs"
+      </MudText>
+      
+      <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mt-6" Style="font-weight: bold; color: var(--mud-palette-primary-light);">
+        — @_response.Author
+      </MudText>
+    </div>
+  </MudAlert>
+}
+
+<div class="d-flex align-center gap-2 mt-8">
+  <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadQuote" Disabled="_loading">
+    Dame más inspiración
+  </MudButton>
+  @if (UserSession.IsLoggedIn && _response != null)
+  {
+    <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" OnClick="SaveFavorite" 
+                   Title="Guardar en mi Biblioteca" Disabled="_loadingFav" Variant="Variant.Outlined" />
+  }
+</div>
+
+@code {
+  private QuoteResponse? _response;
+  private bool _loading = false;
+  private bool _loadingFav = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadQuote();
+  }
+
+  private async Task LoadQuote()
+  {
+    _loading = true;
+    try 
+    {
+        _response = await Http.GetFromJsonAsync<QuoteResponse>("http://localhost:8000/quotes");
+    }
+    catch (Exception)
+    {
+        Snackbar.Add("Error al cargar inspiración", Severity.Error);
+    }
+    finally
+    {
+        _loading = false;
+    }
+  }
+
+  private async Task SaveFavorite()
+  {
+    if (!UserSession.IsLoggedIn || _response == null) return;
+
+    _loadingFav = true;
+    try
+    {
+        var favorite = new {
+            user_id = UserSession.UserId,
+            text_en = _response.QuoteEn,
+            text_es = _response.QuoteEs,
+            author = _response.Author
+        };
+        var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/quote", favorite);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Frase guardada en tu biblioteca", Severity.Success);
+        }
+    }
+    catch (Exception)
+    {
+        Snackbar.Add("Error al guardar favorito", Severity.Error);
+    }
+    finally
+    {
+        _loadingFav = false;
+    }
+  }
+
+  public class QuoteResponse
+  {
+    [JsonPropertyName("quote_en")]
+    public string QuoteEn { get; set; } = "";
+    
+    [JsonPropertyName("quote_es")]
+    public string QuoteEs { get; set; } = "";
+    
+    [JsonPropertyName("author")]
+    public string Author { get; set; } = "";
+  }
+}
+
+<style>
+  .glass-quote {
+    background: rgba(99, 102, 241, 0.2) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    position: relative;
+  }
+  .relative { position: relative; }
+</style>

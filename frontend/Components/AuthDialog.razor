@@ -1,0 +1,119 @@
+@inject frontend.Services.UserSession UserSession
+@inject ISnackbar Snackbar
+@using MudBlazor
+
+<MudDialog>
+  <TitleContent>
+    <MudText Typo="Typo.h5">
+      <MudIcon Icon="@(_isRegisterMode? Icons.Material.Filled.PersonAdd : Icons.Material.Filled.Login)"
+               Class="mr-2 mb-n1" />
+      @(_isRegisterMode ? "Crear una cuenta" : "Bienvenido de nuevo")
+    </MudText>
+  </TitleContent>
+  <DialogContent>
+    <div class="d-flex flex-column gap-4 py-4">
+      <MudTextField @bind-Value="_username" Label="Nombre de usuario" Variant="Variant.Outlined"
+                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" />
+            
+      <MudTextField @bind-Value="_password" Label="Contraseña" Variant="Variant.Outlined" InputType="InputType.Password"
+                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" OnKeyDown="@HandleKeyDown" />
+
+      @if (_isRegisterMode)
+      {
+        <MudTextField @bind-Value="_confirmPassword" Label="Confirmar Contraseña" Variant="Variant.Outlined"
+                      InputType="InputType.Password" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.LockClock" />
+      }
+
+      <MudLink Typo="Typo.body2" OnClick="ToggleMode" Class="cursor-pointer align-self-center mt-2">
+        @(_isRegisterMode ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate aquí")
+      </MudLink>
+    </div>
+  </DialogContent>
+  <DialogActions>
+    <MudButton OnClick="Cancel">Cancelar</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="_loading">
+      @(_loading ? "Procesando..." : (_isRegisterMode ? "Registrarse" : "Entrar"))
+    </MudButton>
+  </DialogActions>
+</MudDialog>
+
+@code {
+  [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+  private string _username = "";
+  private string _password = "";
+  private string _confirmPassword = "";
+  private bool _isRegisterMode = false;
+  private bool _loading = false;
+
+  private void ToggleMode() => _isRegisterMode = !_isRegisterMode;
+
+  private void Cancel() => MudDialog.Cancel();
+
+  private async Task HandleKeyDown(KeyboardEventArgs e)
+  {
+    if (e.Key == "Enter") await Submit();
+  }
+
+  private async Task Submit()
+  {
+    if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_password))
+    {
+      Snackbar.Add("Por favor, completa todos los campos", Severity.Warning);
+      return;
+    }
+
+    if (_isRegisterMode && _password != _confirmPassword)
+    {
+      Snackbar.Add("Las contraseñas no coinciden", Severity.Error);
+      return;
+    }
+
+    _loading = true;
+    try
+    {
+      if (_isRegisterMode)
+      {
+        var error = await UserSession.RegisterAsync(_username, _password);
+        if (error == null)
+        {
+          Snackbar.Add("¡Registro exitoso! Ya puedes iniciar sesión.", Severity.Success);
+          _isRegisterMode = false;
+          _password = "";
+          _confirmPassword = "";
+        }
+        else
+        {
+          Snackbar.Add(error, Severity.Error);
+        }
+      }
+      else
+      {
+        var success = await UserSession.LoginAsync(_username, _password);
+        if (success)
+        {
+          Snackbar.Add($"¡Bienvenido, {UserSession.Username}!", Severity.Success);
+          MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+          Snackbar.Add("Usuario o contraseña incorrectos", Severity.Error);
+        }
+      }
+    }
+    catch (Exception)
+    {
+      Snackbar.Add("Error al conectar con el servidor", Severity.Error);
+    }
+    finally
+    {
+      _loading = false;
+    }
+  }
+}
+
+<style>
+  .cursor-pointer {
+    cursor: pointer;
+  }
+</style>

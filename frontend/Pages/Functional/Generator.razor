@@ -1,0 +1,108 @@
+@page "/generator"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject frontend.Services.UserSession UserSession
+@using System.Text.Json
+
+<MudText Typo="Typo.h4" GutterBottom="true">Data Generator</MudText>
+<MudText Class="mb-8">Genera datos falsos (Faker) para tus pruebas.</MudText>
+
+<MudGrid>
+  <MudItem xs="12" md="4">
+    <MudSelect T="string" Label="Tipo de Dato" @bind-Value="_type">
+      <MudSelectItem Value="@("users")">Usuarios (Básico)</MudSelectItem>
+      <MudSelectItem Value="@("emails")">Lista de Emails</MudSelectItem>
+      <MudSelectItem Value="@("products")">Productos Mock</MudSelectItem>
+      <MudSelectItem Value="@("profiles")">Perfiles Completos</MudSelectItem>
+      <MudSelectItem Value="@("credit_cards")">Tarjetas de Crédito</MudSelectItem>
+      <MudSelectItem Value="@("addresses")">Direcciones Postales</MudSelectItem>
+      <MudSelectItem Value="@("internet")">Datos de Internet (IP/UA)</MudSelectItem>
+      <MudSelectItem Value="@("text")">Párrafos y Texto</MudSelectItem>
+      <MudSelectItem Value="@("dates")">Fechas y Tiempo</MudSelectItem>
+    </MudSelect>
+    <MudNumericField T="int" Label="Cantidad" @bind-Value="_count" Min="1" Max="100" Class="mt-4" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateData" Class="mt-4" FullWidth="true"
+               Disabled="_loading">
+      Generar
+    </MudButton>
+
+    @if (UserSession.IsLoggedIn && !string.IsNullOrEmpty(_jsonResult))
+    {
+      <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Favorite"
+                 OnClick="SaveFavorite" Class="mt-4" FullWidth="true" Disabled="_loadingFav">
+        @( _loadingFav ? "Guardando..." : "Guardar en Biblioteca" )
+      </MudButton>
+    }
+  </MudItem>
+  <MudItem xs="12" md="8">
+    <MudTextField T="string" Label="JSON Result" Variant="Variant.Outlined" @bind-Value="_jsonResult" Lines="15"
+                  ReadOnly="true" />
+  </MudItem>
+</MudGrid>
+
+@code {
+  private string _type = "users";
+  private int _count = 10;
+  private string _jsonResult = "";
+  private bool _loading = false;
+  private bool _loadingFav = false;
+
+  private async Task GenerateData()
+  {
+    _loading = true;
+    try
+    {
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/generate-data", new
+      {
+        type = _type,
+        count = _count
+      });
+      if (response.IsSuccessStatusCode)
+      {
+        var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+        _jsonResult = JsonSerializer.Serialize(result.GetProperty("data"), new JsonSerializerOptions
+        {
+          WriteIndented = true
+        });
+        Snackbar.Add("Datos generados correctamente", Severity.Success);
+      }
+    }
+    catch (Exception ex)
+    {
+      Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+    }
+    finally
+    {
+      _loading = false;
+    }
+  }
+
+  private async Task SaveFavorite()
+  {
+    if (!UserSession.IsLoggedIn || string.IsNullOrWhiteSpace(_jsonResult)) return;
+
+    _loadingFav = true;
+    try
+    {
+      var favorite = new
+      {
+        user_id = UserSession.UserId,
+        data_type = _type,
+        content = _jsonResult
+      };
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/data", favorite);
+      if (response.IsSuccessStatusCode)
+      {
+        Snackbar.Add("Datos guardados en tu biblioteca", Severity.Success);
+      }
+    }
+    catch (Exception)
+    {
+      Snackbar.Add("Error al guardar favorito", Severity.Error);
+    }
+    finally
+    {
+      _loadingFav = false;
+    }
+  }
+}

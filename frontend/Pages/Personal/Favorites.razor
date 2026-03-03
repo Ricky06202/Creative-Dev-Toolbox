@@ -1,0 +1,197 @@
+@page "/favorites"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject frontend.Services.UserSession UserSession
+
+<MudText Typo="Typo.h4" GutterBottom="true">Mi Biblioteca</MudText>
+<MudText Class="mb-8">Tus regex, paletas y frases favoritas guardadas.</MudText>
+
+@if (!UserSession.IsLoggedIn)
+{
+  <MudAlert Severity="Severity.Warning">Debes identificarte en el menú lateral para ver tu biblioteca.</MudAlert>
+}
+else
+{
+  <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="Regex" Icon="@Icons.Material.Filled.Code">
+      <MudGrid>
+        @foreach (var item in _regexFavs)
+        {
+          <MudItem xs="12" md="6">
+            <MudCard Elevation="4" Class="pa-4">
+              <MudCardHeader>
+                <CardHeaderContent>
+                  <MudText Typo="Typo.h6">@item.Title</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                 OnClick="@(() => DeleteFavorite("regex", item.Id))" />
+                </CardHeaderActions>
+              </MudCardHeader>
+              <MudCardContent>
+                <MudText Class="mud-primary-text font-monospace mb-2">@item.Pattern</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@item.Explanation</MudText>
+              </MudCardContent>
+            </MudCard>
+          </MudItem>
+        }
+      </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Paletas" Icon="@Icons.Material.Filled.Palette">
+      <MudGrid>
+        @foreach (var item in _paletteFavs)
+        {
+          <MudItem xs="12" md="4">
+            <MudCard Elevation="4">
+              <MudCardHeader>
+                <CardHeaderContent>
+                  <MudText Typo="Typo.body1" Style="font-weight: bold;">@item.Name</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                 OnClick="@(() => DeleteFavorite("palette", item.Id))" />
+                </CardHeaderActions>
+              </MudCardHeader>
+              <div class="d-flex" style="height: 100px;">
+                @foreach (var color in item.Colors.Split(','))
+                {
+                  <div style="@($"background:{color}; flex: 1;")" title="@color"></div>
+                }
+              </div>
+            </MudCard>
+          </MudItem>
+        }
+      </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Frases" Icon="@Icons.Material.Filled.FormatQuote">
+      <MudGrid>
+        @foreach (var item in _quoteFavs)
+        {
+          <MudItem xs="12">
+            <MudCard Elevation="4" Class="pa-4">
+              <div class="d-flex justify-space-between align-start">
+                <div>
+                  <MudText Typo="Typo.body1" Style="font-style: italic;">"@item.TextEn"</MudText>
+                  <MudText Typo="Typo.body2" Class="mud-text-secondary mt-2">"@item.TextEs"</MudText>
+                  <MudText Typo="Typo.caption" Class="mt-4 d-block">— @item.Author</MudText>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                               OnClick="@(() => DeleteFavorite("quote", item.Id))" />
+              </div>
+            </MudCard>
+          </MudItem>
+        }
+      </MudGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Datos Mock" Icon="@Icons.Material.Filled.Storage">
+      <MudGrid>
+        @foreach (var item in _dataFavs)
+        {
+          <MudItem xs="12" md="6">
+            <MudCard Elevation="4" Class="pa-4">
+              <MudCardHeader>
+                <CardHeaderContent>
+                  <MudText Typo="Typo.subtitle1" Style="font-weight: bold;">
+                    @item.DataType.ToUpper()
+                  </MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                 OnClick="@(() => DeleteFavorite("data", item.Id))" />
+                </CardHeaderActions>
+              </MudCardHeader>
+              <MudCardContent>
+                <div class="json-preview">@item.Content</div>
+              </MudCardContent>
+            </MudCard>
+          </MudItem>
+        }
+      </MudGrid>
+    </MudTabPanel>
+  </MudTabs>
+}
+
+@code {
+  private List<RegexFav> _regexFavs = new();
+  private List<PaletteFav> _paletteFavs = new();
+  private List<QuoteFav> _quoteFavs = new();
+  private List<DataFav> _dataFavs = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (UserSession.IsLoggedIn)
+    {
+      await LoadFavorites();
+    }
+  }
+
+  private async Task LoadFavorites()
+  {
+    try
+    {
+      _regexFavs = await Http.GetFromJsonAsync<List<RegexFav>>($"http://localhost:8000/favorites/regex/{UserSession.UserId}")
+?? new();
+      _paletteFavs = await
+Http.GetFromJsonAsync<List<PaletteFav>>($"http://localhost:8000/favorites/palette/{UserSession.UserId}") ?? new();
+      _quoteFavs = await Http.GetFromJsonAsync<List<QuoteFav>>($"http://localhost:8000/favorites/quote/{UserSession.UserId}")
+?? new();
+      _dataFavs = await Http.GetFromJsonAsync<List<DataFav>>($"http://localhost:8000/favorites/data/{UserSession.UserId}") ??
+new();
+    }
+    catch (Exception) { }
+  }
+
+  private async Task DeleteFavorite(string type, int id)
+  {
+    var response = await Http.DeleteAsync($"http://localhost:8000/favorites/{type}/{id}");
+    if (response.IsSuccessStatusCode)
+    {
+      Snackbar.Add("Eliminado correctamente", Severity.Info);
+      await LoadFavorites();
+    }
+  }
+
+  public class RegexFav
+  {
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Pattern { get; set; } = "";
+    public string Explanation { get; set; } = "";
+  }
+  public class PaletteFav
+  {
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Colors { get; set; } = "";
+  }
+  public class QuoteFav
+  {
+    public int Id { get; set; }
+    public string TextEn { get; set; } = "";
+    public string TextEs { get; set; } = "";
+    public string Author { get; set; } = "";
+  }
+  public class DataFav
+  {
+    public int Id { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("data_type")]
+    public string DataType { get; set; } = "";
+    public string Content { get; set; } = "";
+  }
+}
+
+<style>
+  .json-preview {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    max-height: 150px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+</style>

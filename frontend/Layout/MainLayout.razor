@@ -1,0 +1,124 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Inherit" Class="glass-appbar">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Default" Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3" Style="color: var(--mud-palette-text-primary);">Creative Dev-Toolbox
+        </MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_isDarkMode? Icons.Material.Filled.Brightness4 : Icons.Material.Filled.Brightness7)"
+                       Color="Color.Default" OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="@DrawerVariant.Responsive" Class="glass-drawer">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Toolbox</MudText>
+        </MudDrawerHeader>
+        <UserPanel />
+        <MudNavMenu>
+            <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 mt-2 mb-1" Style="opacity: 0.5;">FUNCTIONAL
+                TOOLS</MudText>
+                <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="/formatter" Icon="@Icons.Material.Filled.AutoFixHigh">Smart Formatter</MudNavLink>
+                <MudNavLink Href="/regex" Icon="@Icons.Material.Filled.FindInPage">Regex Tester Pro</MudNavLink>
+                <MudNavLink Href="/generator" Icon="@Icons.Material.Filled.DataArray">Data Generator</MudNavLink>
+
+                <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 mt-4 mb-2" Style="opacity: 0.5;">ARTISTIC
+                    INSPIRATION</MudText>
+                    <MudNavLink Href="/palette" Icon="@Icons.Material.Filled.Palette">Palette Generator</MudNavLink>
+                    <MudNavLink Href="/quotes" Icon="@Icons.Material.Filled.FormatQuote">Dev Quotes</MudNavLink>
+                    
+                    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 mt-4 mb-2" Style="opacity: 0.5;">PERSONAL
+                    </MudText>
+                    <MudNavLink Href="/favorites" Icon="@Icons.Material.Filled.Favorite">My Library</MudNavLink>
+                </MudNavMenu>
+            </MudDrawer>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+
+        <div class="artistic-background">
+            <ArtisticCanvas />
+        </div>
+
+@inject frontend.Services.UserSession UserSession
+
+@code {
+    bool _drawerOpen = true;
+    bool _isDarkMode = true;
+    MudThemeProvider _mudThemeProvider = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UserSession.InitializeAsync();
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#6366f1",
+            AppbarBackground = "rgba(255, 255, 255, 0.7)",
+            Background = "#f8fafc",
+            DrawerBackground = "rgba(255, 255, 255, 0.8)",
+            Surface = "#ffffff",
+            TextPrimary = "#1e293b",
+            TextSecondary = "#64748b",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#818cf8",
+            AppbarBackground = "rgba(15, 23, 42, 0.7)",
+            Background = "#0f172a",
+            DrawerBackground = "rgba(15, 23, 42, 0.8)",
+            Surface = "#1e293b",
+            TextPrimary = "#f8fafc",
+            TextSecondary = "rgba(248, 250, 252, 0.7)",
+            ActionDefault = "#818cf8"
+        }
+    };
+}
+
+<style>
+    .glass-appbar {
+        backdrop-filter: blur(10px);
+        background-color: var(--mud-palette-appbar-background) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-drawer {
+        backdrop-filter: blur(10px);
+        background-color: var(--mud-palette-drawer-background) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .artistic-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+    }
+
+    .mud-theme-light .artistic-background {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    .mud-theme-dark .artistic-background {
+        background: linear-gradient(135deg, #0f172a 0%, #171e2e 100%);
+    }
+</style>

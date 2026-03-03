@@ -1,0 +1,192 @@
+@page "/palette"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject frontend.Services.UserSession UserSession
+@using System.Text.Json.Serialization
+
+<MudText Typo="Typo.h4" GutterBottom="true">Palette Generator Pro</MudText>
+<MudText Class="mb-8">Genera armonías cromáticas a partir de uno o varios colores base.</MudText>
+
+<MudGrid>
+  <MudItem xs="12" md="10" lg="8" Class="d-flex align-center gap-3 mb-6">
+    <MudTextField @bind-Value="_baseColors" Label="Colores Base (Hex, separados por coma)"
+                  Placeholder="#6366f1, #f43f5e" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  HelperText="Escribe un color o varios para empezar" FullWidth="true" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateNewPalette"
+               StartIcon="@Icons.Material.Filled.AutoAwesome" Disabled="_loading" Style="height: 40px; min-width: 120px;">
+      Generar
+    </MudButton>
+    @if (UserSession.IsLoggedIn && _palette != null)
+    {
+      <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Error" Variant="Variant.Outlined"
+                     OnClick="SaveFavorite" Title="Guardar en mi Biblioteca" />
+    }
+  </MudItem>
+
+  @if (_loading && _palette == null)
+  {
+    <MudItem xs="12" Class="d-flex justify-center py-10">
+      <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+    </MudItem>
+  }
+  else if (_palette != null)
+  {
+    <MudItem xs="12">
+      <div class="palette-container rounded-xl overflow-hidden elevation-8">
+        @foreach (var color in _palette.Colors)
+        {
+          <div class="color-stripe" style="@($"background:{color};")" @onclick="@(() => CopyToClipboard(color))">
+            <div class="color-info">
+              <MudText Typo="Typo.button" Class="color-code">@color.ToUpper()</MudText>
+              <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Class="copy-icon" />
+            </div>
+          </div>
+        }
+      </div>
+    </MudItem>
+  }
+</MudGrid>
+
+@code {
+  private PaletteResponse? _palette;
+  private string _baseColors = "#6366f1";
+  private bool _loading = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await GenerateNewPalette();
+  }
+
+  private async Task GenerateNewPalette()
+  {
+    _loading = true;
+    try
+    {
+      var response = await
+Http.PostAsync($"http://localhost:8000/generate-palette?base_colors={Uri.EscapeDataString(_baseColors)}", null);
+      if (response.IsSuccessStatusCode)
+      {
+        _palette = await response.Content.ReadFromJsonAsync<PaletteResponse>();
+      }
+    }
+    catch (Exception)
+    {
+      Snackbar.Add("Error al generar la paleta", Severity.Error);
+    }
+    finally
+    {
+      _loading = false;
+    }
+  }
+
+  private async Task SaveFavorite()
+  {
+    if (!UserSession.IsLoggedIn || _palette == null) return;
+
+    try
+    {
+      var favorite = new
+      {
+        user_id = UserSession.UserId,
+        name = _palette.Name,
+        colors = string.Join(",", _palette.Colors)
+      };
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/palette", favorite);
+      if (response.IsSuccessStatusCode)
+      {
+        Snackbar.Add("Paleta guardada en tu biblioteca", Severity.Success);
+      }
+    }
+    catch (Exception)
+    {
+      Snackbar.Add("Error al guardar favorito", Severity.Error);
+    }
+  }
+
+  private async Task CopyToClipboard(string color)
+  {
+    await JS.InvokeVoidAsync("copyToClipboard", color);
+    Snackbar.Add($"Color {color} copiado", Severity.Info);
+  }
+
+  public class PaletteResponse
+  {
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+    
+    [JsonPropertyName("colors")]
+    public List<string> Colors { get; set; } = new();
+  }
+}
+
+<style>
+  .palette-container {
+    display: flex;
+    width: 100%;
+    height: 400px;
+    background: #111;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .color-stripe {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 40px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .color-stripe:hover {
+    flex: 1.5;
+  }
+
+  .color-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateY(100px);
+    transition: transform 0.3s ease;
+    opacity: 0;
+  }
+
+  .color-stripe:hover .color-info {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .color-code {
+    color: white;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .copy-icon {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Mostrar el código siempre en móvil */
+  @@media (max-width: 600px) {
+    .palette-container {
+      flex-direction: column;
+      height: 600px;
+    }
+
+    .color-info {
+      transform: translateY(0);
+      opacity: 1;
+      padding: 6px 12px;
+    }
+  }
+</style>

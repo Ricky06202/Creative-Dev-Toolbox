@@ -1,0 +1,116 @@
+@page "/formatter"
+@using System.Text.Json.Serialization
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" GutterBottom="true">Smart Formatter</MudText>
+<MudText Class="mb-8">Embellece tu código (JSON, SQL, HTML, XML, CSS, JS, Python, C#, Java, C, C++) al instante.
+</MudText>
+
+<MudGrid>
+  <MudItem xs="12" md="6">
+    <MudAutocomplete T="string" Label="Buscar Lenguaje" @bind-Value="_language" SearchFunc="@SearchLanguages"
+                     ResetValueOnEmptyText="true" CoerceText="true" CoerceValue="true" AdornmentIcon="@Icons.Material.Filled.Search"
+                     AdornmentColor="Color.Primary" />
+    
+    <MudTextField T="string" Label="Código Original" Variant="Variant.Outlined" @bind-Value="_inputCode" Lines="15"
+                  Class="mt-4" />
+    
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FormatCode" Class="mt-4" Disabled="_loading">
+      @if (_loading)
+      {
+        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+        <MudText Class="ms-2">Procesando...</MudText>
+      }
+      else
+      {
+        <MudText>Formatear</MudText>
+      }
+    </MudButton>
+  </MudItem>
+  
+  <MudItem xs="12" md="6">
+    <MudTextField T="string" Label="Resultado" Variant="Variant.Outlined" @bind-Value="_outputCode" Lines="15"
+                  ReadOnly="true" />
+    
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CopyToClipboard" Class="mt-4"
+               Disabled="@(string.IsNullOrEmpty(_outputCode))">
+      Copiar al Portapapeles
+    </MudButton>
+  </MudItem>
+</MudGrid>
+
+@code {
+  private string _inputCode = "";
+  private string _outputCode = "";
+  private string _language = ""; // Empty by default as requested
+  private bool _loading = false;
+
+  private string[] _languages = { "json", "sql", "html", "xml", "css", "javascript", "python", "c", "cpp", "java",
+"csharp" };
+
+  private async Task<IEnumerable<string>> SearchLanguages(string value, CancellationToken token)
+  {
+    if (string.IsNullOrEmpty(value))
+      return _languages;
+    
+    return _languages.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+  }
+
+  private async Task FormatCode()
+  {
+    if (string.IsNullOrWhiteSpace(_inputCode))
+    {
+      Snackbar.Add("Por favor, introduce algún código.", Severity.Warning);
+      return;
+    }
+
+    if (string.IsNullOrWhiteSpace(_language))
+    {
+      Snackbar.Add("Por favor, selecciona un lenguaje.", Severity.Warning);
+      return;
+    }
+
+    _loading = true;
+    try
+    {
+      var response = await Http.PostAsJsonAsync("http://localhost:8000/format", new
+      {
+        code = _inputCode,
+        language = _language
+      });
+
+      if (response.IsSuccessStatusCode)
+      {
+        var result = await response.Content.ReadFromJsonAsync<FormatResponse>();
+        _outputCode = result?.Formatted ?? "";
+        Snackbar.Add("¡Código formateado!", Severity.Success);
+      }
+      else
+      {
+        var error = await response.Content.ReadAsStringAsync();
+        Snackbar.Add($"Error: {error}", Severity.Error);
+      }
+    }
+    catch (Exception ex)
+    {
+      Snackbar.Add($"Error de conexión: {ex.Message}", Severity.Error);
+    }
+    finally
+    {
+      _loading = false;
+    }
+  }
+
+  private async Task CopyToClipboard()
+  {
+    // Placeholder for JS interop clipboard copy
+    Snackbar.Add("Copiado al portapapeles (Simulado)", Severity.Info);
+  }
+
+  public class FormatResponse
+  {
+    [JsonPropertyName("formatted")]
+    public string Formatted { get; set; } = "";
+  }
+}

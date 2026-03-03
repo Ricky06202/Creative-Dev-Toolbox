@@ -1,0 +1,61 @@
+@inject frontend.Services.UserSession UserSession
+@inject IDialogService DialogService
+
+<div class="user-panel pa-4">
+  @if (UserSession.IsLoggedIn)
+  {
+    <div class="d-flex align-center gap-2">
+      <MudAvatar Color="Color.Primary" Size="Size.Small" Elevation="4">
+        @UserSession.Username?[0].ToString().ToUpper()
+      </MudAvatar>
+      <div class="d-flex flex-column">
+        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size: 0.7rem;">CONECTADO</MudText>
+        <MudText Typo="Typo.body2" Style="font-weight: bold;">@UserSession.Username</MudText>
+      </div>
+      <MudSpacer />
+      <MudIconButton Icon="@Icons.Material.Filled.Logout" Size="Size.Small" OnClick="UserSession.LogoutAsync"
+                     Title="Cerrar Sesión" />
+    </div>
+  }
+  else
+  {
+    <div class="d-flex flex-column gap-2">
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" StartIcon="@Icons.Material.Filled.Login"
+                 OnClick="OpenAuthDialog" Class="rounded-pill shadow-glow">
+        Iniciar Sesión
+      </MudButton>
+      <MudText Typo="Typo.caption" Align="Align.Center" Class="mud-text-secondary">
+        Para guardar tus favoritos
+      </MudText>
+    </div>
+  }
+</div>
+
+@code {
+  protected override void OnInitialized()
+  {
+    UserSession.OnChange += StateHasChanged;
+  }
+
+  private async Task OpenAuthDialog()
+  {
+    var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+    await DialogService.ShowAsync<AuthDialog>("Autenticación", options);
+  }
+
+  public void Dispose()
+  {
+    UserSession.OnChange -= StateHasChanged;
+  }
+}
+
+<style>
+  .user-panel {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
+</style>

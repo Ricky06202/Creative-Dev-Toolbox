@@ -1,0 +1,51 @@
+﻿@page "/"
+
+<MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Class="mt-8">Creative Dev-Toolbox</MudText>
+<MudText Typo="Typo.h6" Align="Align.Center" Class="mb-12" Style="opacity: 0.7;">Tu navaja suiza de desarrollo y fuente
+  de inspiración diaria.</MudText>
+
+  <MudGrid Justify="Justify.Center">
+    <MudItem xs="12" sm="6" md="4">
+      <MudCard Elevation="4" Class="pa-4 glass-card hover-card" onclick="location.href='/formatter'">
+        <MudStack AlignItems="AlignItems.Center">
+          <MudIcon Icon="@Icons.Material.Filled.AutoFixHigh" Size="Size.Large" Color="Color.Primary" />
+          <MudText Typo="Typo.h6">Smart Formatter</MudText>
+          <MudText Align="Align.Center">JSON, SQL y HTML perfectamente ordenados.</MudText>
+        </MudStack>
+      </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+      <MudCard Elevation="4" Class="pa-4 glass-card hover-card" onclick="location.href='/regex'">
+        <MudStack AlignItems="AlignItems.Center">
+          <MudIcon Icon="@Icons.Material.Filled.FindInPage" Size="Size.Large" Color="Color.Secondary" />
+          <MudText Typo="Typo.h6">Regex Tester Pro</MudText>
+          <MudText Align="Align.Center">Entiende tus expresiones regulares.</MudText>
+        </MudStack>
+      </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+      <MudCard Elevation="4" Class="pa-4 glass-card hover-card" onclick="location.href='/generator'">
+        <MudStack AlignItems="AlignItems.Center">
+          <MudIcon Icon="@Icons.Material.Filled.DataArray" Size="Size.Large" Color="Color.Info" />
+          <MudText Typo="Typo.h6">Data Generator</MudText>
+          <MudText Align="Align.Center">Genera datos Faker al instante.</MudText>
+        </MudStack>
+      </MudCard>
+    </MudItem>
+  </MudGrid>
+
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05) !important;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      transition: transform 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+    }
+
+    .hover-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+  </style>
