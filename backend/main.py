@@ -2,13 +2,33 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_and_tables
 from routers import auth, tools, favorites
+from fastapi.responses import JSONResponse
+import traceback
 
 # FastAPI App
 app = FastAPI(title="Creative Dev-Toolbox API")
 
-@app.on_event("startup")
-def on_startup():
+# Explicit initialization for WSGI/cPanel stability
+try:
     create_db_and_tables()
+except Exception as e:
+    print(f"Error initializing database: {e}")
+
+# Global Exception Handler for Debugging (Crucial for 500 errors in cPanel)
+@app.exception_handler(Exception)
+async def debug_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+            "type": type(exc).__name__,
+            "traceback": traceback.format_exc()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "https://creativedevtool.rsanjur.com",
+            "Access-Control-Allow-Credentials": "true"
+        }
+    )
 
 # Configure CORS
 origins = [
