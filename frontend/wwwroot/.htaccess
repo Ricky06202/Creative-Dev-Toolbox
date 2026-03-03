@@ -1,7 +1,14 @@
-# .htaccess for Blazor WASM SPA on cPanel
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.html$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . index.html [L]
+# .htaccess mejorado para Blazor WASM
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    
+    # NO redirigir archivos que existen físicamente (CSS, JS, _framework)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Redirigir el resto al index para manejo de SPA
+    RewriteRule ^(.*)$ index.html [L]
+</IfModule>
