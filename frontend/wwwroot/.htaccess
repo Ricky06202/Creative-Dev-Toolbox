@@ -12,3 +12,49 @@
     # Redirigir el resto al index para manejo de SPA
     RewriteRule ^(.*)$ index.html [L]
 </IfModule>
+
+# Configuración de Compresión para cPanel (Brotli/Gzip)
+<IfModule mod_headers.c>
+    # Servir archivos .br (Brotli) si el navegador lo soporta
+    RewriteCond %{HTTP:Accept-Encoding} br
+    RewriteCond %{REQUEST_FILENAME}\.br -f
+    RewriteRule ^(.*)\.(js|css|wasm|dat)$ $1.$2.br [L]
+    
+    # Servir archivos .gz (Gzip) si Brotli no está o no se soporta
+    RewriteCond %{HTTP:Accept-Encoding} gzip
+    RewriteCond %{REQUEST_FILENAME}\.gz -f
+    RewriteRule ^(.*)\.(js|css|wasm|dat)$ $1.$2.gz [L]
+
+    # Establecer Content-Encoding correcto para archivos comprimidos
+    <FilesMatch "\.js\.br$">
+        Header set Content-Encoding br
+        Header set Content-Type application/javascript
+    </FilesMatch>
+    <FilesMatch "\.css\.br$">
+        Header set Content-Encoding br
+        Header set Content-Type text/css
+    </FilesMatch>
+    <FilesMatch "\.wasm\.br$">
+        Header set Content-Encoding br
+        Header set Content-Type application/wasm
+    </FilesMatch>
+    <FilesMatch "\.dat\.br$">
+        Header set Content-Encoding br
+    </FilesMatch>
+
+    <FilesMatch "\.js\.gz$">
+        Header set Content-Encoding gzip
+        Header set Content-Type application/javascript
+    </FilesMatch>
+    <FilesMatch "\.css\.gz$">
+        Header set Content-Encoding gzip
+        Header set Content-Type text/css
+    </FilesMatch>
+    <FilesMatch "\.wasm\.gz$">
+        Header set Content-Encoding gzip
+        Header set Content-Type application/wasm
+    </FilesMatch>
+    <FilesMatch "\.dat\.gz$">
+        Header set Content-Encoding gzip
+    </FilesMatch>
+</IfModule>

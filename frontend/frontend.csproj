@@ -7,6 +7,9 @@
     <OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>
     <WasmFingerprintAssets>false</WasmFingerprintAssets>
     <StaticWebAssetsFingerprintingEnabled>false</StaticWebAssetsFingerprintingEnabled>
+    <!-- Optimizaciones para cPanel -->
+    <BlazorEnableCompression>true</BlazorEnableCompression>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
