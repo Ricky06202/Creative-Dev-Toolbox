@@ -4,7 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>
+    <WasmFingerprintAssets>false</WasmFingerprintAssets>
+    <StaticWebAssetsFingerprintingEnabled>false</StaticWebAssetsFingerprintingEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,11 +15,4 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.3" PrivateAssets="all" />
     <PackageReference Include="MudBlazor" Version="9.0.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="wwwroot\index.html">
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-
 </Project>
