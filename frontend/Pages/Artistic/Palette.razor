@@ -64,7 +64,7 @@
     try
     {
       var response = await
-Http.PostAsync($"http://localhost:8000/generate-palette?base_colors={Uri.EscapeDataString(_baseColors)}", null);
+Http.PostAsync($"https://api-creativedevtool.rsanjur.com/generate-palette?base_colors={Uri.EscapeDataString(_baseColors)}", null);
       if (response.IsSuccessStatusCode)
       {
         _palette = await response.Content.ReadFromJsonAsync<PaletteResponse>();
@@ -92,7 +92,7 @@ Http.PostAsync($"http://localhost:8000/generate-palette?base_colors={Uri.EscapeD
         name = _palette.Name,
         colors = string.Join(",", _palette.Colors)
       };
-      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/palette", favorite);
+      var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/favorites/palette", favorite);
       if (response.IsSuccessStatusCode)
       {
         Snackbar.Add("Paleta guardada en tu biblioteca", Severity.Success);

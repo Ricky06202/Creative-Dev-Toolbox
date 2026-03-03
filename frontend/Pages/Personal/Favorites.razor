@@ -132,13 +132,13 @@ else
   {
     try
     {
-      _regexFavs = await Http.GetFromJsonAsync<List<RegexFav>>($"http://localhost:8000/favorites/regex/{UserSession.UserId}")
+      _regexFavs = await Http.GetFromJsonAsync<List<RegexFav>>($"https://api-creativedevtool.rsanjur.com/favorites/regex/{UserSession.UserId}")
 ?? new();
       _paletteFavs = await
-Http.GetFromJsonAsync<List<PaletteFav>>($"http://localhost:8000/favorites/palette/{UserSession.UserId}") ?? new();
-      _quoteFavs = await Http.GetFromJsonAsync<List<QuoteFav>>($"http://localhost:8000/favorites/quote/{UserSession.UserId}")
+Http.GetFromJsonAsync<List<PaletteFav>>($"https://api-creativedevtool.rsanjur.com/favorites/palette/{UserSession.UserId}") ?? new();
+      _quoteFavs = await Http.GetFromJsonAsync<List<QuoteFav>>($"https://api-creativedevtool.rsanjur.com/favorites/quote/{UserSession.UserId}")
 ?? new();
-      _dataFavs = await Http.GetFromJsonAsync<List<DataFav>>($"http://localhost:8000/favorites/data/{UserSession.UserId}") ??
+      _dataFavs = await Http.GetFromJsonAsync<List<DataFav>>($"https://api-creativedevtool.rsanjur.com/favorites/data/{UserSession.UserId}") ??
 new();
     }
     catch (Exception) { }
@@ -146,7 +146,7 @@ new();
 
   private async Task DeleteFavorite(string type, int id)
   {
-    var response = await Http.DeleteAsync($"http://localhost:8000/favorites/{type}/{id}");
+    var response = await Http.DeleteAsync($"https://api-creativedevtool.rsanjur.com/favorites/{type}/{id}");
     if (response.IsSuccessStatusCode)
     {
       Snackbar.Add("Eliminado correctamente", Severity.Info);

@@ -77,7 +77,7 @@
     _loading = true;
     try
     {
-      var response = await Http.PostAsJsonAsync("http://localhost:8000/regex-explain", new
+      var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/regex-explain", new
       {
         regex = _regex,
         text = _testText
@@ -110,7 +110,7 @@
         explanation = _response?.Explanation ?? "Análisis básico",
         title = _regex.Length > 20 ? _regex.Substring(0, 17) + "..." : _regex
       };
-      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/regex", favorite);
+      var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/favorites/regex", favorite);
       if (response.IsSuccessStatusCode)
       {
         Snackbar.Add("Regex guardado en tu biblioteca", Severity.Success);

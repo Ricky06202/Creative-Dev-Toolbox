@@ -59,7 +59,7 @@ else
     _loading = true;
     try 
     {
-        _response = await Http.GetFromJsonAsync<QuoteResponse>("http://localhost:8000/quotes");
+        _response = await Http.GetFromJsonAsync<QuoteResponse>("https://api-creativedevtool.rsanjur.com/quotes");
     }
     catch (Exception)
     {
@@ -84,7 +84,7 @@ else
             text_es = _response.QuoteEs,
             author = _response.Author
         };
-        var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/quote", favorite);
+        var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/favorites/quote", favorite);
         if (response.IsSuccessStatusCode)
         {
             Snackbar.Add("Frase guardada en tu biblioteca", Severity.Success);

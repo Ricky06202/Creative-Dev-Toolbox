@@ -52,7 +52,7 @@
     _loading = true;
     try
     {
-      var response = await Http.PostAsJsonAsync("http://localhost:8000/generate-data", new
+      var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/generate-data", new
       {
         type = _type,
         count = _count
@@ -90,7 +90,7 @@
         data_type = _type,
         content = _jsonResult
       };
-      var response = await Http.PostAsJsonAsync("http://localhost:8000/favorites/data", favorite);
+      var response = await Http.PostAsJsonAsync("https://api-creativedevtool.rsanjur.com/favorites/data", favorite);
       if (response.IsSuccessStatusCode)
       {
         Snackbar.Add("Datos guardados en tu biblioteca", Severity.Success);
